@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report erstellen - MC Report System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        :root {
+            --bg-dark: #1a1a1a;
+            --bg-card: #2d2d2d;
+            --accent-green: #5b8c36;
+            --accent-green-dark: #4a732c;
+            --accent-brown: #8b5e3c;
+            --text-light: #e8e8e8;
+            --text-muted: #888;
+            --danger: #c94c4c;
+            --success: #5bb55b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'VT323', monospace;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+
+        header {
+            background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
+            padding: 20px 30px;
+            text-align: center;
+            border-bottom: 4px solid var(--accent-brown);
+            margin-bottom: 30px;
+        }
+
+        header h1 { font-size: 2.5rem; text-shadow: 3px 3px 0 #000; }
+
+        .card {
+            background: var(--bg-card);
+            border: 3px solid #444;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--accent-green);
+            padding-bottom: 10px;
+        }
+
+        .form-group { margin-bottom: 20px; }
+
+        .form-group label {
+            display: block;
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            background: #1a1a1a;
+            border: 3px solid #444;
+            color: var(--text-light);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; }
+        }
+
+        .upload-area {
+            border: 3px dashed #444;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #222;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent-green);
+            background: #252525;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--accent-green);
+            background: rgba(91, 140, 54, 0.1);
+        }
+
+        .upload-area input { display: none; }
+        .upload-icon { font-size: 3rem; margin-bottom: 10px; }
+        .upload-text { font-size: 1.3rem; color: var(--text-muted); }
+        .upload-hint { font-size: 1.1rem; color: var(--text-muted); margin-top: 5px; }
+
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .preview-item {
+            position: relative;
+            background: #1a1a1a;
+            border: 2px solid #444;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .preview-item img,
+        .preview-item video {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 3px;
+        }
+
+        .preview-item .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            color: #fff;
+            border: 2px solid #000;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-family: 'VT323', monospace;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .preview-item .file-name {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-types {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .file-type-badge {
+            padding: 5px 10px;
+            font-size: 1rem;
+            background: #333;
+            border: 1px solid #444;
+        }
+
+        .btn {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            padding: 12px 24px;
+            border: 3px solid #000;
+            cursor: pointer;
+            transition: all 0.1s;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--accent-green);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-green-dark);
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0 #000;
+        }
+
+        .btn-secondary {
+            background: var(--accent-brown);
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: #6d4a2f;
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0 #000;
+        }
+
+        .btn-small {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 1.2rem;
+        }
+
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .alert {
+            padding: 15px 20px;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            border: 3px solid;
+        }
+
+        .alert-success {
+            background: rgba(91, 181, 91, 0.2);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(201, 76, 76, 0.2);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .required { color: var(--danger); }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #222;
+            border: 3px solid var(--accent-green);
+            margin-bottom: 20px;
+        }
+
+        .user-info span { font-size: 1.4rem; }
+        .user-info .btn-small { width: auto; }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-green);
+            box-shadow: inset 0 0 0 2px #000;
+        }
+
+        .my-report-item {
+            background: #222;
+            border: 3px solid #444;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .my-report-item.offen { border-left: 5px solid var(--warning); }
+        .my-report-item.in-bearbeitung { border-left: 5px solid var(--accent-green); }
+        .my-report-item.erledigt { border-left: 5px solid var(--success); }
+
+        .my-report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .my-report-header h3 {
+            font-size: 1.6rem;
+            color: var(--text-light);
+        }
+
+        .my-report-meta {
+            font-size: 1.2rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .my-report-content {
+            background: #1a1a1a;
+            padding: 15px;
+            font-size: 1.3rem;
+            color: #ddd;
+            white-space: pre-wrap;
+            border: 2px solid #333;
+        }
+
+        .status-badge-small {
+            padding: 5px 12px;
+            font-size: 1.1rem;
+            border: 2px solid;
+        }
+
+        .status-badge-small.offen {
+            background: rgba(201, 168, 76, 0.2);
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .status-badge-small.in-bearbeitung {
+            background: rgba(91, 140, 54, 0.2);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .status-badge-small.erledigt {
+            background: rgba(91, 181, 91, 0.2);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .chat-btn {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            padding: 6px 12px;
+            background: var(--accent-green);
+            border: 2px solid #000;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .chat-btn:hover {
+            background: var(--accent-green-dark);
+        }
+
+        .chat-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+
+        .chat-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-modal-content {
+            background: var(--bg-card);
+            border: 3px solid #444;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-modal-header {
+            padding: 15px 20px;
+            background: var(--accent-green);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--accent-brown);
+        }
+
+        .chat-modal-header h3 {
+            font-size: 1.6rem;
+            color: #fff;
+        }
+
+        .chat-close {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            max-height: 400px;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #222;
+            border: 2px solid #444;
+        }
+
+        .chat-message.player {
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .chat-message.staff {
+            border-left: 4px solid var(--accent-brown);
+        }
+
+        .chat-message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            color: #888;
+        }
+
+        .chat-message-sender {
+            font-weight: bold;
+            color: var(--accent-green);
+        }
+
+        .chat-message.staff .chat-message-sender {
+            color: var(--accent-brown);
+        }
+
+        .chat-message-content {
+            font-size: 1.3rem;
+            color: #ddd;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .chat-message-files {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .chat-message-files img,
+        .chat-message-files video {
+            max-width: 200px;
+            max-height: 150px;
+            border: 2px solid #444;
+        }
+
+        .chat-input-area {
+            padding: 15px;
+            border-top: 2px solid #444;
+            background: #1a1a1a;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .chat-input-row input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            background: #222;
+            border: 3px solid #444;
+            color: var(--text-light);
+        }
+
+        .chat-input-row input[type="text"]:focus {
+            border-color: var(--accent-green);
+            outline: none;
+        }
+
+        .chat-upload-btn {
+            padding: 10px 15px;
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            background: #333;
+            border: 2px solid #444;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        .chat-upload-btn:hover {
+            background: #444;
+        }
+
+        .chat-send-btn {
+            padding: 10px 20px;
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            background: var(--accent-green);
+            border: 2px solid #000;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .chat-send-btn:hover {
+            background: var(--accent-green-dark);
+        }
+
+        .chat-messages-embedded {
+            min-height: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            background: #1a1a1a;
+            border: 3px solid #444;
+            margin-bottom: 15px;
+        }
+
+        .chat-input-area-embedded {
+            padding: 15px;
+            background: #222;
+            border: 3px solid #444;
+        }
+
+        .hidden { display: none !important; }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            border-top: 3px solid #333;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⛏️ Report erstellen</h1>
+    </header>
+
+    <div class="container">
+        <div id="login-section">
+            <div class="card">
+                <h2>Spieler Login</h2>
+                <div id="login-alert"></div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="player">Spieler wählen</label>
+                        <select id="player" required>
+                            <option value="">-- Spieler wählen --</option>
+                        </select>
+                    </div>
+                    <div id="password-group" class="form-group hidden">
+                        <label for="password">Passwort</label>
+                        <input type="password" id="password" placeholder="Passwort eingeben">
+                    </div>
+                    <div id="new-password-group" class="hidden">
+                        <div class="form-group">
+                            <label for="new-password">Neues Passwort erstellen</label>
+                            <input type="password" id="new-password" placeholder="Neues Passwort (mind. 6 Zeichen)">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-password">Passwort bestätigen</label>
+                            <input type="password" id="confirm-password" placeholder="Passwort wiederholen">
+                        </div>
+                    </div>
+                    <button type="submit" id="login-btn" class="btn btn-primary">Weiter</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="report-section" class="hidden">
+            <div class="user-info">
+                <span id="user-display">Eingeloggt als: <strong></strong></span>
+                <button class="btn btn-danger btn-small" onclick="logout()">Logout</button>
+            </div>
+
+            <div class="tabs">
+                <button class="btn btn-primary btn-small tab-btn active" onclick="showPlayerTab('new')">➕ Neuer Report</button>
+                <button class="btn btn-secondary btn-small tab-btn" onclick="showPlayerTab('my')">📋 Meine Reports</button>
+                <button class="btn btn-secondary btn-small tab-btn" onclick="showPlayerTab('chat')">💬 Chat</button>
+            </div>
+
+            <div id="tab-new-report">
+            <div class="card">
+                <h2>Neuen Report einreichen</h2>
+                <div id="report-alert"></div>
+
+                <form id="report-form">
+                    <div class="form-group" id="reported-group">
+                        <label for="reported-select">Gemeldeter Spieler <span class="required">*</span></label>
+                        <select id="reported-select" onchange="handleReportedSelect()">
+                            <option value="">-- Spieler wählen --</option>
+                            <option value="xJxshadow">xJxshadow (josua)</option>
+                            <option value="Jokolo_twitch">Jokolo_twitch (Jun)</option>
+                            <option value="tolpii">tolpii (ole)</option>
+                            <option value="zKaitoo">zKaitoo (Robert)</option>
+                            <option value="Lereletsplay_YT">Lereletsplay_YT (Levin)</option>
+                            <option value="rusty212">rusty212 (ALTIN)</option>
+                            <option value="mrbeast_roblox67">mrbeast_roblox67 (Dominik)</option>
+                            <option value="other">Anderer Spieler</option>
+                        </select>
+                        <input type="text" id="reported" class="hidden" placeholder="Name des Spielers" style="margin-top: 10px;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Kategorie <span class="required">*</span></label>
+                        <select id="category" required onchange="handleCategoryChange()">
+                            <option value="">-- Kategorie wählen --</option>
+                            <option value="beleidigung">Beleidigung / Beschimpfung</option>
+                            <option value="betrug">Betrug / Scamming</option>
+                            <option value="cheating">Cheating / Hacking</option>
+                            <option value="spam">Spam / Werbung</option>
+                            <option value="bug">🐛 Bug / Technisches Problem</option>
+                            <option value="feedback">💡 Allgemeines Feedback</option>
+                            <option value="sonstiges">Sonstiges</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evidence" id="evidence-label">Beweise / Chat-Verlauf <span class="required">*</span></label>
+                        <textarea id="evidence" placeholder="Beschreibe den Vorfall so detailliert wie möglich. Füge Chat-Verläufe, Zeiten und andere Beweise hinzu." required></textarea>
+                    </div>
+
+                    <div class="form-group" id="date-group">
+                        <label for="date">Datum / Uhrzeit <span class="required">(optional)</span></label>
+                        <input type="datetime-local" id="date">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Bilder und Videos hochladen <span class="required">(optional)</span></label>
+                        <div class="upload-area" id="upload-area">
+                            <input type="file" id="file-input" multiple accept="image/*,video/*">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">Klicke hier oder ziehe Dateien hierher</div>
+                            <div class="upload-hint">Bilder: PNG, JPG, GIF | Videos: MP4, WEBM</div>
+                        </div>
+                        <div class="file-types">
+                            <span class="file-type-badge">📷 Bilder</span>
+                            <span class="file-type-badge">🎬 Videos</span>
+                            <span class="file-type-badge">Max. 50MB</span>
+                        </div>
+                        <div class="preview-container" id="preview-container"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Report absenden</button>
+                </form>
+            </div>
+            </div>
+
+            <div id="tab-my-reports" class="hidden">
+                <div class="card">
+                    <h2>Meine Reports</h2>
+                    <div id="my-reports-alert"></div>
+                    <div id="my-reports-list"></div>
+                </div>
+            </div>
+
+            <div id="tab-chat" class="hidden">
+                <div class="card">
+                    <h2>💬 Chat</h2>
+                    <div id="chat-list-alert"></div>
+                    <select id="chat-report-select" onchange="loadChatForReport()" style="margin-bottom: 15px; padding: 10px; font-family: 'VT323', monospace; font-size: 1.3rem; background: #1a1a1a; border: 3px solid #444; color: var(--text-light);">
+                        <option value="">-- Chat auswählen --</option>
+                    </select>
+                    <div id="chat-messages" class="chat-messages-embedded">
+                        <div class="empty-state">Wähle einen Chat aus oder starte einen über ein Report</div>
+                    </div>
+                    <div class="chat-input-area-embedded">
+                        <div class="chat-input-row">
+                            <input type="text" id="chat-message-input" placeholder="Nachricht eingeben...">
+                            <input type="file" id="chat-file-input" accept="image/*,video/*" style="display: none;" onchange="handleChatFileSelect()">
+                            <button class="chat-upload-btn" onclick="document.getElementById('chat-file-input').click()">📎</button>
+                            <button class="chat-send-btn" onclick="sendChatMessage()">Senden</button>
+                        </div>
+                        <div id="chat-file-preview" style="display: none; margin-bottom: 10px; padding: 10px; background: #222; border: 2px solid #444;">
+                            <span id="chat-file-name" style="color: #888;"></span>
+                            <button onclick="clearChatFile()" style="margin-left: 10px; background: none; border: none; color: var(--danger); cursor: pointer;">×</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 MC Report System | Minecraft</p>
+    </footer>
+
+    <div id="chat-modal" class="chat-modal">
+        <div class="chat-modal-content">
+            <div class="chat-modal-header">
+                <h3>💬 Chat</h3>
+                <button class="chat-close" onclick="closeChat()">×</button>
+            </div>
+            <div id="chat-messages" class="chat-messages">
+                <div class="empty-state">Laden...</div>
+            </div>
+            <div class="chat-input-area">
+                <div class="chat-input-row">
+                    <input type="text" id="chat-message-input" placeholder="Nachricht eingeben...">
+                    <input type="file" id="chat-file-input" accept="image/*,video/*" style="display: none;" onchange="handleChatFileSelect()">
+                    <button class="chat-upload-btn" onclick="document.getElementById('chat-file-input').click()">📎</button>
+                    <button class="chat-send-btn" onclick="sendChatMessage()">Senden</button>
+                </div>
+                <div id="chat-file-preview" style="display: none; margin-bottom: 10px; padding: 10px; background: #222; border: 2px solid #444;">
+                    <span id="chat-file-name" style="color: #888;"></span>
+                    <button onclick="clearChatFile()" style="margin-left: 10px; background: none; border: none; color: var(--danger); cursor: pointer;">×</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            console.error('Error:', msg, 'line:', line);
+            return false;
+        };
+
+        const SUPABASE_URL = 'https://wlcfpqvuhxdrtwstkpus.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_mR7hZV0B7zIqQAtLFr1QWw_2FwLePGS';
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let players = [];
+        let isProcessing = false;
+
+        function safeBtoa(str) {
+            try { return btoa(str); } catch(e) { return null; }
+        }
+
+        function safeAtob(str) {
+            try { return atob(str); } catch(e) { return null; }
+        }
+
+        async function loadPlayers() {
+            try {
+                const { data, error } = await db
+                    .from('player_users')
+                    .select('*')
+                    .order('username');
+
+                if (error) throw error;
+                players = data || [];
+
+                const select = document.getElementById('player');
+                select.innerHTML = '<option value="">-- Spieler wählen --</option>';
+                players.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.username;
+                    option.textContent = p.realname ? `${p.username} (${p.realname})` : p.username;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                showAlert('login-alert', 'Fehler beim Laden der Spieler: ' + error.message, 'error');
+            }
+        }
+
+        loadPlayers();
+
+        document.getElementById('player').addEventListener('change', function() {
+            const player = players.find(p => p.username === this.value);
+            const passwordGroup = document.getElementById('password-group');
+            const newPasswordGroup = document.getElementById('new-password-group');
+            const loginBtn = document.getElementById('login-btn');
+
+            if (player) {
+                if (player.password_hash) {
+                    passwordGroup.classList.remove('hidden');
+                    newPasswordGroup.classList.add('hidden');
+                    loginBtn.textContent = 'Einloggen';
+                } else {
+                    passwordGroup.classList.add('hidden');
+                    newPasswordGroup.classList.remove('hidden');
+                    loginBtn.textContent = 'Passwort erstellen';
+                }
+            } else {
+                passwordGroup.classList.add('hidden');
+                newPasswordGroup.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (isProcessing) return;
+            isProcessing = true;
+
+            const playerSelect = document.getElementById('player');
+            const player = players.find(p => p.username === playerSelect.value);
+            const password = document.getElementById('password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            if (!player) {
+                showAlert('login-alert', 'Bitte wähle einen Spieler aus', 'error');
+                isProcessing = false;
+                return;
+            }
+
+            if (player.password_hash) {
+                const inputHash = safeBtoa(password);
+                if (inputHash === player.password_hash) {
+                    currentUser = player;
+                    showReportSection();
+                } else {
+                    showAlert('login-alert', 'Falsches Passwort', 'error');
+                }
+            } else {
+                if (!newPassword || newPassword.length < 6) {
+                    showAlert('login-alert', 'Passwort muss mindestens 6 Zeichen haben', 'error');
+                    isProcessing = false;
+                    return;
+                }
+                if (newPassword !== confirmPassword) {
+                    showAlert('login-alert', 'Passwörter stimmen nicht überein', 'error');
+                    isProcessing = false;
+                    return;
+                }
+
+                try {
+                    const { error } = await db
+                        .from('player_users')
+                        .update({ password_hash: safeBtoa(newPassword) })
+                        .eq('id', player.id);
+
+                    if (error) throw error;
+
+                    currentUser = { ...player, password_hash: safeBtoa(newPassword) };
+                    showAlert('login-alert', 'Passwort erstellt! Willkommen!', 'success');
+                    setTimeout(() => showReportSection(), 1000);
+                } catch (error) {
+                    showAlert('login-alert', 'Fehler: ' + error.message, 'error');
+                }
+            }
+            isProcessing = false;
+        });
+
+        function showReportSection() {
+            setTimeout(() => {
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('report-section').classList.remove('hidden');
+                document.getElementById('user-display').innerHTML = `Eingeloggt als: <strong>${currentUser.username}</strong>`;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                loadMyReports();
+            }, 10);
+        }
+
+        function showPlayerTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (tab === 'new') {
+                document.getElementById('tab-new-report').classList.remove('hidden');
+                document.getElementById('tab-my-reports').classList.add('hidden');
+                document.getElementById('tab-chat').classList.add('hidden');
+            } else if (tab === 'my') {
+                document.getElementById('tab-new-report').classList.add('hidden');
+                document.getElementById('tab-my-reports').classList.remove('hidden');
+                document.getElementById('tab-chat').classList.add('hidden');
+                loadMyReports();
+            } else if (tab === 'chat') {
+                document.getElementById('tab-new-report').classList.add('hidden');
+                document.getElementById('tab-my-reports').classList.add('hidden');
+                document.getElementById('tab-chat').classList.remove('hidden');
+                loadChatList();
+            }
+        }
+
+        async function loadChatList() {
+            const select = document.getElementById('chat-report-select');
+            select.innerHTML = '<option value="">-- Chat auswählen --</option>';
+
+            try {
+                const { data: reports, error } = await db
+                    .from('reports')
+                    .select('id, reported, category, status, created_at')
+                    .eq('reporter', currentUser.username)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                const { data: chats } = await db
+                    .from('chats')
+                    .select('report_id')
+                    .order('created_at', { ascending: false });
+
+                const reportsWithChats = new Set(chats?.map(c => c.report_id) || []);
+                const filteredReports = reports?.filter(r => reportsWithChats.has(r.id)) || [];
+
+                filteredReports.forEach(r => {
+                    const option = document.createElement('option');
+                    option.value = r.id;
+                    const label = r.reported ? escapeHtml(r.reported) : getCategoryLabel(r.category);
+                    option.textContent = `#${r.id} - ${label}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading chat list:', error);
+            }
+        }
+
+        async function loadChatForReport() {
+            const select = document.getElementById('chat-report-select');
+            const reportId = select.value;
+            const container = document.getElementById('chat-messages');
+
+            if (!reportId) {
+                container.innerHTML = '<div class="empty-state">Wähle einen Chat aus</div>';
+                return;
+            }
+
+            currentChatReportId = parseInt(reportId);
+            await loadChatMessagesForReport();
+        }
+
+        async function loadChatMessagesForReport() {
+            const container = document.getElementById('chat-messages');
+            if (!currentChatReportId) return;
+
+            try {
+                const { data, error } = await db
+                    .from('chats')
+                    .select('*')
+                    .eq('report_id', currentChatReportId)
+                    .order('created_at', { ascending: true });
+
+                if (error) throw error;
+
+                const messages = data || [];
+
+                if (messages.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Noch keine Nachrichten. Starte die Unterhaltung!</div>';
+                    return;
+                }
+
+                container.innerHTML = messages.map(m => `
+                    <div class="chat-message ${m.sender_type}">
+                        <div class="chat-message-header">
+                            <span class="chat-message-sender">${escapeHtml(m.sender)}</span>
+                            <span>${new Date(m.created_at).toLocaleString('de-DE')}</span>
+                        </div>
+                        <div class="chat-message-content">${escapeHtml(m.message)}</div>
+                        ${m.files && m.files.length > 0 ? `
+                            <div class="chat-message-files">
+                                ${m.files.map(f => f.type && f.type.startsWith('video') 
+                                    ? `<video src="${escapeHtml(f.url)}" controls></video>`
+                                    : `<img src="${escapeHtml(f.url)}" alt="${escapeHtml(f.name)}">`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+
+                container.scrollTop = container.scrollHeight;
+            } catch (error) {
+                console.error('Chat load error:', error);
+            }
+
+            // Start polling if not already running
+            if (!chatPollingInterval && currentChatReportId) {
+                chatPollingInterval = setInterval(loadChatMessagesForReport, 3000);
+            }
+        }
+
+        async function loadMyReports() {
+            const container = document.getElementById('my-reports-list');
+            container.innerHTML = '<div class="empty-state">Laden...</div>';
+
+            try {
+                const { data, error } = await db
+                    .from('reports')
+                    .select('*')
+                    .eq('reporter', currentUser.username)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                const reports = data || [];
+
+                if (reports.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Du hast noch keine Reports eingereicht.</div>';
+                    return;
+                }
+
+                container.innerHTML = reports.map(r => `
+                    <div class="my-report-item ${r.status || 'offen'}">
+                        <div class="my-report-header">
+                            <h3>${r.reported ? 'Gemeldet: ' + escapeHtml(r.reported) : getCategoryLabel(r.category)}</h3>
+                            <span class="status-badge-small ${r.status || 'offen'}">${getStatusLabel(r.status)}</span>
+                        </div>
+                        <div class="my-report-meta">
+                            📂 ${getCategoryLabel(r.category)} | 📅 ${new Date(r.created_at).toLocaleString('de-DE')}
+                        </div>
+                        <div class="my-report-content">${escapeHtml(r.evidence)}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = `<div class="empty-state">Fehler: ${error.message}</div>`;
+            }
+        }
+
+        function getStatusLabel(status) {
+            const labels = { 'offen': 'Offen', 'in-bearbeitung': 'In Bearbeitung', 'erledigt': 'Erledigt' };
+            return labels[status] || 'Offen';
+        }
+
+        function getCategoryLabel(category) {
+            const labels = {
+                'beleidigung': 'Beleidigung',
+                'betrug': 'Betrug',
+                'cheating': 'Cheating',
+                'spam': 'Spam',
+                'bug': '🐛 Bug',
+                'feedback': '💡 Feedback',
+                'sonstiges': 'Sonstiges'
+            };
+            return labels[category] || category;
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('report-section').classList.add('hidden');
+            document.getElementById('login-form').reset();
+            document.getElementById('password-group').classList.add('hidden');
+            document.getElementById('new-password-group').classList.add('hidden');
+        }
+
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            try {
+                currentUser = JSON.parse(storedUser);
+                showReportSection();
+            } catch (e) { localStorage.removeItem('currentUser'); }
+        }
+
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const previewContainer = document.getElementById('preview-container');
+        let uploadedFiles = [];
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            const maxSize = 50 * 1024 * 1024;
+            const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            const allowedVideoTypes = ['video/mp4', 'video/webm'];
+
+            for (const file of files) {
+                if (file.size > maxSize) {
+                    showAlert('report-alert', `Datei ${file.name} ist zu groß (max. 50MB)`, 'error');
+                    continue;
+                }
+                if (!allowedImageTypes.includes(file.type) && !allowedVideoTypes.includes(file.type)) {
+                    showAlert('report-alert', `Dateityp nicht erlaubt für ${file.name}`, 'error');
+                    continue;
+                }
+                uploadedFiles.push(file);
+                addPreview(file);
+            }
+        }
+
+        function addPreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                const index = uploadedFiles.indexOf(file);
+
+                if (file.type.startsWith('image/')) {
+                    div.innerHTML = `<img src="${e.target.result}"><button class="remove-btn" onclick="removeFile(${index})">×</button><div class="file-name">${file.name}</div>`;
+                } else {
+                    div.innerHTML = `<video src="${e.target.result}"></video><button class="remove-btn" onclick="removeFile(${index})">×</button><div class="file-name">${file.name}</div>`;
+                }
+                previewContainer.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        window.removeFile = function(index) {
+            uploadedFiles.splice(index, 1);
+            renderPreviews();
+        };
+
+        function renderPreviews() {
+            previewContainer.innerHTML = '';
+            uploadedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'preview-item';
+                    if (file.type.startsWith('image/')) {
+                        div.innerHTML = `<img src="${e.target.result}"><button class="remove-btn" onclick="removeFile(${index})">×</button><div class="file-name">${file.name}</div>`;
+                    } else {
+                        div.innerHTML = `<video src="${e.target.result}"></video><button class="remove-btn" onclick="removeFile(${index})">×</button><div class="file-name">${file.name}</div>`;
+                    }
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        document.getElementById('report-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!currentUser) {
+                showAlert('report-alert', 'Bitte zuerst einloggen', 'error');
+                return;
+            }
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Wird gesendet...';
+
+            try {
+                const fileUrls = [];
+
+                for (const file of uploadedFiles) {
+                    const fileName = `${Date.now()}_${file.name}`;
+                    const { data, error } = await db.storage.from('reports').upload(fileName, file);
+                    if (error) throw error;
+
+                    const { data: urlData } = db.storage.from('reports').getPublicUrl(fileName);
+                    fileUrls.push({ name: file.name, type: file.type, url: urlData.publicUrl });
+                }
+
+                const category = document.getElementById('category').value;
+                const reportedInput = document.getElementById('reported');
+                const categoriesWithPlayer = ['beleidigung', 'betrug', 'cheating', 'spam', 'sonstiges'];
+                
+                let reported = null;
+                if (categoriesWithPlayer.includes(category)) {
+                    reported = reportedInput.value;
+                }
+
+                const { error: insertError } = await db.from('reports').insert({
+                    reporter: currentUser.username,
+                    realname: currentUser.realname || null,
+                    reported: reported,
+                    category: category,
+                    evidence: document.getElementById('evidence').value,
+                    incident_date: document.getElementById('date').value || null,
+                    status: 'offen',
+                    files: fileUrls
+                });
+
+                if (insertError) {
+                    console.error('Insert error:', insertError);
+                    throw insertError;
+                }
+
+                showAlert('report-alert', 'Report erfolgreich abgesendet! Vielen Dank.', 'success');
+                this.reset();
+                uploadedFiles = [];
+                previewContainer.innerHTML = '';
+            } catch (error) {
+                console.error('Full error:', error);
+                showAlert('report-alert', 'Fehler: ' + (error.message || JSON.stringify(error)), 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Report absenden';
+            }
+        });
+
+        function handleCategoryChange() {
+            const category = document.getElementById('category').value;
+            const reportedGroup = document.getElementById('reported-group');
+            const reportedSelect = document.getElementById('reported-select');
+            const reportedInput = document.getElementById('reported');
+            const evidence = document.getElementById('evidence');
+
+            const categoriesWithPlayer = ['beleidigung', 'betrug', 'cheating', 'spam', 'sonstiges'];
+            
+            if (categoriesWithPlayer.includes(category)) {
+                reportedGroup.classList.remove('hidden');
+                reportedSelect.required = true;
+                evidence.placeholder = "Beschreibe den Vorfall so detailliert wie möglich. Füge Chat-Verläufe, Zeiten und andere Beweise hinzu.";
+            } else {
+                reportedGroup.classList.add('hidden');
+                reportedSelect.required = false;
+                reportedSelect.value = '';
+                reportedInput.value = '';
+                
+                if (category === 'bug') {
+                    evidence.placeholder = "Beschreibe den Bug so detailliert wie möglich. Was ist passiert? Was sollte passieren? Welche Schritte führen zum Bug?";
+                } else if (category === 'feedback') {
+                    evidence.placeholder = "Teile uns dein Feedback mit. Was können wir verbessern? Was gefällt dir?";
+                }
+            }
+        }
+
+        function handleReportedSelect() {
+            const select = document.getElementById('reported-select');
+            const input = document.getElementById('reported');
+            
+            if (select.value === 'other') {
+                select.classList.add('hidden');
+                input.classList.remove('hidden');
+                input.required = true;
+                input.focus();
+            } else if (select.value) {
+                input.value = select.value;
+                input.required = false;
+            } else {
+                input.value = '';
+                input.required = false;
+            }
+        }
+
+        function showAlert(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => el.innerHTML = '', 5000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        let currentChatReportId = null;
+        let chatFile = null;
+        let chatPollingInterval = null;
+
+        async function openChat(reportId) {
+            currentChatReportId = reportId;
+            document.getElementById('chat-modal').classList.add('active');
+            await loadChatMessages();
+        }
+
+        function closeChat() {
+            document.getElementById('chat-modal').classList.remove('active');
+            currentChatReportId = null;
+            clearChatFile();
+            if (chatPollingInterval) {
+                clearInterval(chatPollingInterval);
+                chatPollingInterval = null;
+            }
+        }
+
+        async function loadChatMessages() {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = '<div class="empty-state">Laden...</div>';
+
+            try {
+                const { data, error } = await db
+                    .from('chats')
+                    .select('*')
+                    .eq('report_id', currentChatReportId)
+                    .order('created_at', { ascending: true });
+
+                if (error) throw error;
+
+                const messages = data || [];
+
+                if (messages.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Noch keine Nachrichten. Starte die Unterhaltung!</div>';
+                    return;
+                }
+
+                container.innerHTML = messages.map(m => `
+                    <div class="chat-message ${m.sender_type}">
+                        <div class="chat-message-header">
+                            <span class="chat-message-sender">${escapeHtml(m.sender)}</span>
+                            <span>${new Date(m.created_at).toLocaleString('de-DE')}</span>
+                        </div>
+                        <div class="chat-message-content">${escapeHtml(m.message)}</div>
+                        ${m.files && m.files.length > 0 ? `
+                            <div class="chat-message-files">
+                                ${m.files.map(f => f.type && f.type.startsWith('video') 
+                                    ? `<video src="${escapeHtml(f.url)}" controls></video>`
+                                    : `<img src="${escapeHtml(f.url)}" alt="${escapeHtml(f.name)}">`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+
+                container.scrollTop = container.scrollHeight;
+            } catch (error) {
+                container.innerHTML = `<div class="empty-state">Fehler: ${error.message}</div>`;
+            }
+        }
+
+        function handleChatFileSelect() {
+            const input = document.getElementById('chat-file-input');
+            if (input.files && input.files[0]) {
+                chatFile = input.files[0];
+                document.getElementById('chat-file-name').textContent = chatFile.name;
+                document.getElementById('chat-file-preview').style.display = 'block';
+            }
+        }
+
+        function clearChatFile() {
+            chatFile = null;
+            document.getElementById('chat-file-input').value = '';
+            document.getElementById('chat-file-preview').style.display = 'none';
+        }
+
+        async function sendChatMessage() {
+            if (!currentChatReportId) {
+                showAlert('chat-list-alert', 'Bitte zuerst einen Chat auswählen', 'error');
+                return;
+            }
+
+            const input = document.getElementById('chat-message-input');
+            const message = input.value.trim();
+
+            if (!message && !chatFile) {
+                showAlert('chat-list-alert', 'Bitte eine Nachricht oder Datei eingeben', 'error');
+                return;
+            }
+
+            try {
+                let fileUrls = [];
+
+                if (chatFile) {
+                    const fileName = `chat_${Date.now()}_${chatFile.name}`;
+                    const { data, error } = await db.storage.from('reports').upload(fileName, chatFile);
+                    if (error) throw error;
+
+                    const { data: urlData } = db.storage.from('reports').getPublicUrl(fileName);
+                    fileUrls.push({
+                        name: chatFile.name,
+                        type: chatFile.type,
+                        url: urlData.publicUrl
+                    });
+                }
+
+                const { error: insertError } = await db.from('chats').insert({
+                    report_id: currentChatReportId,
+                    sender: currentUser.username,
+                    sender_type: 'player',
+                    message: message || '',
+                    files: fileUrls
+                });
+
+                if (insertError) throw insertError;
+
+                input.value = '';
+                clearChatFile();
+                await loadChatMessagesForReport();
+            } catch (error) {
+                showAlert('chat-list-alert', 'Fehler: ' + error.message, 'error');
+            }
+        }
+
+        document.getElementById('chat-message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+    </script>
+</body>
+</html>
